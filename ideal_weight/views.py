@@ -5,15 +5,19 @@ from tasks.models import Person
 from tasks.serializers import PersonSerializer
 
 class IdealWeightMixin(APIView):
-    queryset = Person.objects.all()
-    serializer_class = PersonSerializer
 
     def get(self, request, id):
-        return Response(
-            {
-                'user': self.PersonSerializer(self.Person.filter(id=id), many=False).data,
-                'ideal_weight': (72.7 * request.data['height']) - 58 if str(request.data['sex']).lower() == 'm' else (62.1 * request.data['height']) - 44.7
-            },
-            status=status.HTTP_200_OK
-        )
-
+        try:
+            serializer = PersonSerializer(Person.objects.get(id=id), many=False)
+            return Response(
+                {
+                    'user': serializer.data['name'],
+                    'ideal_weight': (72.7 * serializer.data['height']) - 58 if str(serializer.data['sex']).lower() == 'm' else (62.1 * serializer.data['height']) - 44.7
+                },
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                { 'error': str(e) },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
